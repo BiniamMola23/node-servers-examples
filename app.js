@@ -11,11 +11,10 @@ app.use(cors());
 app.use(body_parser.urlencoded({ extended: true }));
 
 var mysqlConnection = mysql.createConnection({
-  // socketPath: "/Applications/MAMP/tmp/mysql/mysql.sock", //path to mysql sock in MAMP
-  user: "mydb",
-  password: "mydb",
   host: "localhost",
-  database: "mydb",
+  user: "root",      // 'mydb' የነበረውን ወደ 'root' ቀይረው
+  password: "",      // 'mydb' የነበረውን አጥፍተህ ባዶ አድርገው ("")
+  database: "mydb",  // በ phpMyAdmin ውስጥ 'mydb' የሚባል ዳታቤዝ መኖሩን አረጋግጥ
 });
 
 mysqlConnection.connect((err) => {
@@ -144,11 +143,11 @@ app.get("/iphones", (req, res) => {
   );
 });
 
-app.listen(3001, (err) => {
+// ከ 3001 ወደ 3002 ቀይረው
+app.listen(3002, (err) => {
   if (err) {
-    console.log(err)
-  }
-  else {
-    console.log("Listening to : 3001")
+    console.log(err);
+  } else {
+    console.log("Listening to : 3002");
   }
 });

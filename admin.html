@@ -4,142 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Iphone</title>
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #f3f4f6;
-        color: #1f2937;
-      }
-
-      .container {
-        max-width: 900px;
-        margin: 40px auto;
-        padding: 0 16px;
-      }
-
-      h1 {
-        margin: 0 0 16px;
-        text-align: center;
-      }
-
-      form {
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      }
-
-      .section {
-        margin-bottom: 20px;
-        padding: 16px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        background: #fafafa;
-      }
-
-      h2 {
-        margin-top: 0;
-        font-size: 18px;
-      }
-
-      label {
-        display: inline-block;
-        margin: 8px 0 6px;
-        font-weight: 600;
-      }
-
-      input[type="text"],
-      textarea {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        font-size: 14px;
-      }
-
-      textarea {
-        resize: vertical;
-      }
-
-      .submit-btn {
-        width: 100%;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-size: 15px;
-        font-weight: 700;
-        color: #fff;
-        background: #2563eb;
-        cursor: pointer;
-      }
-
-      .submit-btn:hover {
-        background: #1d4ed8;
-      }
-
-      .list-header {
-        margin-top: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .refresh-btn {
-        border: none;
-        border-radius: 8px;
-        padding: 10px 14px;
-        font-weight: 600;
-        color: #fff;
-        background: #0f766e;
-        cursor: pointer;
-      }
-
-      .refresh-btn:hover {
-        background: #0d5f59;
-      }
-
-      .products-wrap {
-        margin-top: 12px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      th,
-      td {
-        text-align: left;
-        padding: 12px;
-        border-bottom: 1px solid #e5e7eb;
-        vertical-align: top;
-      }
-
-      th {
-        background: #f9fafb;
-        font-size: 14px;
-      }
-
-      .status {
-        padding: 12px;
-        color: #374151;
-      }
-    </style>
+    <link rel="stylesheet" href="/admin.css" />
   </head>
 
   <body>
     <div class="container">
     <h1>Add iPhone</h1>
-    <form action="http://localhost:3002/add-product" method="post">
+    <form id="productForm" action="/add-product" method="post">
       <div class="section">
         <h2>Add Products</h2>
         <label for="productname">Product-name </label>
@@ -205,14 +76,14 @@
       <input class="submit-btn" type="submit" value="Add product" />
     </form>
 
-    <div class="list-header">
+    <div id="displaySection" class="list-header">
       <h2>Products from Database</h2>
       <button id="refreshBtn" class="refresh-btn" type="button">Refresh List</button>
     </div>
 
     <div class="products-wrap">
       <div id="status" class="status">Loading products...</div>
-      <table id="productsTable" style="display: none">
+      <table id="productsTable">
         <thead>
           <tr>
             <th>Name</th>
@@ -228,10 +99,12 @@
     </div>
 
     <script>
+      const productForm = document.getElementById("productForm");
       const productsBody = document.getElementById("productsBody");
       const productsTable = document.getElementById("productsTable");
       const status = document.getElementById("status");
       const refreshBtn = document.getElementById("refreshBtn");
+      const displaySection = document.getElementById("displaySection");
 
       function escapeHtml(text) {
         return String(text ?? "")
@@ -280,6 +153,32 @@
       }
 
       refreshBtn.addEventListener("click", loadProducts);
+      productForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(productForm);
+        const submitBtn = productForm.querySelector(".submit-btn");
+        const originalBtnText = submitBtn.value;
+        submitBtn.value = "Saving...";
+        submitBtn.disabled = true;
+
+        try {
+          const response = await fetch("/add-product", {
+            method: "POST",
+            body: new URLSearchParams(formData),
+          });
+
+          if (!response.ok) throw new Error("Failed to insert product");
+
+          await loadProducts();
+          productForm.reset();
+          displaySection.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (error) {
+          alert("Could not insert product. Please check server and database.");
+        } finally {
+          submitBtn.value = originalBtnText;
+          submitBtn.disabled = false;
+        }
+      });
       loadProducts();
     </script>
   </body>

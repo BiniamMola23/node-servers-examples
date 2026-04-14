@@ -1,11 +1,13 @@
 const mysql = require("mysql");
 const express = require("express");
 var cors = require("cors");
+const path = require("path");
 
 const body_parser = require("body-parser");
 
 var app = express();
 app.use(cors());
+app.use(express.static(__dirname));
 
 // Use  body parser as middle ware
 app.use(body_parser.urlencoded({ extended: true }));
@@ -20,6 +22,10 @@ var mysqlConnection = mysql.createConnection({
 mysqlConnection.connect((err) => {
   if (err) console.log(err);
   else console.log("Connected");
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
 });
 
 // Install: Create the tables necessary
@@ -143,11 +149,12 @@ app.get("/iphones", (req, res) => {
   );
 });
 
-// ከ 3001 ወደ 3002 ቀይረው
-app.listen(3002, (err) => {
+const PORT = process.env.PORT || 3002;
+
+app.listen(PORT, (err) => {
   if (err) {
     console.log(err);
   } else {
-    console.log("Listening to : 3002");
+    console.log(`Listening to : ${PORT}`);
   }
 });

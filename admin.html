@@ -4,12 +4,143 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Iphone</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 16px;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        text-align: center;
+      }
+
+      form {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      }
+
+      .section {
+        margin-bottom: 20px;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fafafa;
+      }
+
+      h2 {
+        margin-top: 0;
+        font-size: 18px;
+      }
+
+      label {
+        display: inline-block;
+        margin: 8px 0 6px;
+        font-weight: 600;
+      }
+
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      textarea {
+        resize: vertical;
+      }
+
+      .submit-btn {
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        background: #2563eb;
+        cursor: pointer;
+      }
+
+      .submit-btn:hover {
+        background: #1d4ed8;
+      }
+
+      .list-header {
+        margin-top: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .refresh-btn {
+        border: none;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-weight: 600;
+        color: #fff;
+        background: #0f766e;
+        cursor: pointer;
+      }
+
+      .refresh-btn:hover {
+        background: #0d5f59;
+      }
+
+      .products-wrap {
+        margin-top: 12px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f9fafb;
+        font-size: 14px;
+      }
+
+      .status {
+        padding: 12px;
+        color: #374151;
+      }
+    </style>
   </head>
 
   <body>
+    <div class="container">
     <h1>Add iPhone</h1>
-    <form action="http://localhost:3001/add-product" method="post">
-      <div>
+    <form action="http://localhost:3002/add-product" method="post">
+      <div class="section">
         <h2>Add Products</h2>
         <label for="productname">Product-name </label>
         <br />
@@ -19,7 +150,7 @@
         <br />
         <input type="text" name="product_url" />
       </div>
-      <div>
+      <div class="section">
         <h2>Add product details</h2>
         <label for="product_color">product_color </label>
         <br />
@@ -29,7 +160,7 @@
         <br />
         <input type="text" name="product_storage" />
       </div>
-      <div>
+      <div class="section">
         <h2>Add product description</h2>
         <label for="product_brief_description"
           >product_brief_description
@@ -59,7 +190,7 @@
         <br />
         <input type="text" name="product_link" />
       </div>
-      <div>
+      <div class="section">
         <h2>Add product Price</h2>
         <label label for="starting_price">starting_price </label>
         <br />
@@ -71,7 +202,85 @@
       </div>
 
       <br /><br />
-      <input type="submit" value="Add product" />
+      <input class="submit-btn" type="submit" value="Add product" />
     </form>
+
+    <div class="list-header">
+      <h2>Products from Database</h2>
+      <button id="refreshBtn" class="refresh-btn" type="button">Refresh List</button>
+    </div>
+
+    <div class="products-wrap">
+      <div id="status" class="status">Loading products...</div>
+      <table id="productsTable" style="display: none">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>URL</th>
+            <th>Brief Description</th>
+            <th>Starting Price</th>
+            <th>Price Range</th>
+          </tr>
+        </thead>
+        <tbody id="productsBody"></tbody>
+      </table>
+    </div>
+    </div>
+
+    <script>
+      const productsBody = document.getElementById("productsBody");
+      const productsTable = document.getElementById("productsTable");
+      const status = document.getElementById("status");
+      const refreshBtn = document.getElementById("refreshBtn");
+
+      function escapeHtml(text) {
+        return String(text ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      async function loadProducts() {
+        status.style.display = "block";
+        status.textContent = "Loading products...";
+        productsTable.style.display = "none";
+
+        try {
+          const response = await fetch("/iphones");
+          if (!response.ok) throw new Error("Failed to load products");
+
+          const data = await response.json();
+          const products = data.products || [];
+
+          if (products.length === 0) {
+            status.textContent = "No products found in database.";
+            return;
+          }
+
+          productsBody.innerHTML = products
+            .map(
+              (product) => `
+                <tr>
+                  <td>${escapeHtml(product.product_name)}</td>
+                  <td>${escapeHtml(product.product_url)}</td>
+                  <td>${escapeHtml(product.product_brief_description)}</td>
+                  <td>${escapeHtml(product.starting_price)}</td>
+                  <td>${escapeHtml(product.price_range)}</td>
+                </tr>
+              `
+            )
+            .join("");
+
+          status.style.display = "none";
+          productsTable.style.display = "table";
+        } catch (error) {
+          status.textContent =
+            "Could not load data from database. Check server/MySQL and try again.";
+        }
+      }
+
+      refreshBtn.addEventListener("click", loadProducts);
+      loadProducts();
+    </script>
   </body>
 </html>
